@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code × Git/GitHub 実践ラーニング</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1117">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #3fb950;
+      --warning: #d29922;
+      --danger: #f85149;
+      --purple: #bc8cff;
+      --sidebar-w: 260px;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .header-logo .icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .header-logo span { color: var(--text); }
+    .header-logo span em { color: var(--accent); font-style: normal; }
+
+    .progress-wrap {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 24px;
+    }
+    .progress-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .progress-bar-bg {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-reset {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-reset:hover { color: var(--text); border-color: var(--text-muted); }
+
+    .menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* ===== LAYOUT ===== */
+    .app-body {
+      display: flex;
+      flex: 1;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .level-tab {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .level-tab button {
+      flex: 1;
+      padding: 10px 4px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .level-tab button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .level-tab button:hover:not(.active) { color: var(--text); }
+    .level-tab button.locked { opacity: 0.4; cursor: not-allowed; }
+
+    .step-list { padding: 8px 0; }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .step-item:hover { background: var(--bg3); }
+    .step-item.active {
+      background: var(--bg3);
+      border-left-color: var(--accent);
+    }
+    .step-item.completed .step-num {
+      background: var(--success);
+      color: #fff;
+    }
+    .step-item.locked { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+    .step-item.active .step-num {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .step-title-sidebar {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+    .step-check {
+      margin-left: auto;
+      color: var(--success);
+      font-size: 12px;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main {
+      flex: 1;
+      padding: 32px;
+      max-width: 760px;
+      overflow-y: auto;
+    }
+
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    /* レベルバッジ */
+    .level-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .level-badge.lv1 { background: rgba(63,185,80,0.15); color: var(--success); }
+    .level-badge.lv2 { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .level-badge.lv3 { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+    .step-header {
+      margin-bottom: 24px;
+    }
+    .step-number-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .step-title {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .step-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* セクション */
+    .section { margin-bottom: 28px; }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* 解説テキスト */
+    .desc-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+    .desc-text p + p { margin-top: 12px; }
+
+    /* コードブロック */
+    .code-block {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .code-block-header .lang { font-weight: 600; }
+    .code-block pre {
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 16px;
+      overflow-x: auto;
+      color: var(--text);
+    }
+    .code-block pre .comment { color: var(--text-muted); }
+    .code-block pre .cmd { color: var(--success); }
+    .code-block pre .str { color: #79c0ff; }
+    .code-block pre .key { color: #ff7b72; }
+
+    /* Claude Code意味ボックス */
+    .claude-box {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.3);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .claude-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .claude-box p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    /* プロンプトコピー */
+    .prompt-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .prompt-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: rgba(188,140,255,0.08);
+      border-bottom: 1px solid var(--border);
+    }
+    .prompt-box-header span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-copy {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover { color: var(--text); border-color: var(--text-muted); }
+    .btn-copy.copied { color: var(--success); border-color: var(--success); }
+    .prompt-text {
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    /* クイズ */
+    .quiz-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .quiz-question {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .quiz-question::before {
+      content: "Q.";
+      color: var(--warning);
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      text-align: left;
+      width: 100%;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .quiz-option:hover:not(:disabled) { border-color: var(--accent); background: rgba(88,166,255,0.08); }
+    .quiz-option.correct { border-color: var(--success); background: rgba(63,185,80,0.1); color: var(--success); }
+    .quiz-option.wrong { border-color: var(--danger); background: rgba(248,81,73,0.1); color: var(--danger); }
+    .quiz-option:disabled { cursor: default; }
+    .quiz-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .quiz-result {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .quiz-result.show { display: block; }
+    .quiz-result.correct-result { background: rgba(63,185,80,0.1); color: var(--success); border: 1px solid rgba(63,185,80,0.3); }
+    .quiz-result.wrong-result { background: rgba(248,81,73,0.08); color: var(--danger); border: 1px solid rgba(248,81,73,0.25); }
+
+    /* 完了ボタン */
+    .complete-section { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .btn-complete {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      background: var(--success);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-complete:hover { background: #45c556; transform: translateY(-1px); }
+    .btn-complete:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-complete.done { background: var(--bg3); color: var(--success); border: 1px solid var(--success); }
+
+    .nav-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover { color: var(--text); border-color: var(--text-muted); }
+    .btn-nav.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-nav.primary:hover { background: #6cb6ff; }
+
+    /* ロック画面 */
+    .locked-content {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .locked-icon {
+      font-size: 48px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .locked-content h3 { font-size: 20px; margin-bottom: 10px; }
+    .locked-content p { color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .btn-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--warning);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+    }
+
+    /* 完了祝い */
+    .congrats-box {
+      background: rgba(63,185,80,0.1);
+      border: 1px solid rgba(63,185,80,0.3);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+    }
+    .congrats-box h3 { font-size: 20px; color: var(--success); margin-bottom: 8px; }
+    .congrats-box p { color: var(--text-muted); line-height: 1.6; }
+
+    /* ===== モバイル ===== */
+    .overlay { display: none; }
+
+    @media (max-width: 768px) {
+      .menu-btn { display: block; }
+      .progress-wrap { display: none; }
+
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 56px;
+        height: calc(100vh - 56px);
+        z-index: 200;
+        transition: left 0.3s ease;
+        width: 280px;
+      }
+      .sidebar.open { left: 0; }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        top: 56px;
+        background: rgba(0,0,0,0.6);
+        z-index: 150;
+        display: none;
+      }
+      .overlay.show { display: block; }
+
+      .main { padding: 20px 16px; }
+      .step-title { font-size: 22px; }
+    }
+
+    /* ===== アニメーション ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .step-content.active { animation: fadeIn 0.25s ease; }
+
+    /* ===== COMPLETION STAR ===== */
+    .star-burst {
+      display: inline-block;
+      animation: pop 0.4s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); }
+      60% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header>
+  <div class="header-logo">
+    <div class="icon">⚡</div>
+    <span>Claude Code × <em>Git学習</em></span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>学習進捗</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-reset" onclick="resetProgress()">リセット</button>
+    <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()">
+      <i class="fa fa-bars"></i>
+    </button>
+  </div>
+</header>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="app-body">
+
+  <!-- サイドバー -->
+  <nav class="sidebar" id="sidebar">
+    <div class="level-tab">
+      <button class="active" onclick="switchLevel(1, this)" id="tab-lv1">Lv.1 基礎</button>
+      <button class="locked" onclick="switchLevel(2, this)" id="tab-lv2">Lv.2 中級 🔒</button>
+      <button class="locked" onclick="switchLevel(3, this)" id="tab-lv3">Lv.3 応用 🔒</button>
+    </div>
+
+    <!-- Lv.1 ステップ一覧 -->
+    <div class="step-list" id="step-list-1">
+      <div class="step-item active" onclick="showStep(1,1)" id="nav-1-1">
+        <div class="step-num">1</div>
+        <div class="step-title-sidebar">リポジトリとは何か</div>
+        <span class="step-check" id="check-1-1"></span>
+      </div>
+      <div class="step-item" onclick="showStep(1,2)" id="nav-1-2">
+        <div class="step-num">2</div>
+        <div class="step-title-sidebar">git init</div>
+        <span class="step-check" id="check-1-2"></span>
+      </div>
+      <div class="step-item" onclick="showStep(1,3)" id="nav-1-3">
+        <div class="step-num">3</div>
+        <div class="step-title-sidebar">git add / git commit</div>
+        <span class="step-check" id="check-1-3"></span>
+      </div>
+      <div class="step-item" onclick="showStep(1,4)" id="nav-1-4">
+        <div class="step-num">4</div>
+        <div class="step-title-sidebar">.gitignore</div>
+        <span class="step-check" id="check-1-4"></span>
+      </div>
+      <div class="step-item" onclick="showStep(1,5)" id="nav-1-5">
+        <div class="step-num">5</div>
+        <div class="step-title-sidebar">git status / git log</div>
+        <span class="step-check" id="check-1-5"></span>
+      </div>
+    </div>
+
+    <!-- Lv.2 ステップ一覧（ロック） -->
+    <div class="step-list" id="step-list-2" style="display:none">
+      <div class="step-item locked"><div class="step-num">1</div><div class="step-title-sidebar">ブランチとは何か</div></div>
+      <div class="step-item locked"><div class="step-num">2</div><div class="step-title-sidebar">GitHubリポジトリ作成</div></div>
+      <div class="step-item locked"><div class="step-num">3</div><div class="step-title-sidebar">git push / git pull</div></div>
+      <div class="step-item locked"><div class="step-num">4</div><div class="step-title-sidebar">Pull Request（PR）</div></div>
+      <div class="step-item locked"><div class="step-num">5</div><div class="step-title-sidebar">WorktreeとBranchの関係</div></div>
+    </div>
+
+    <!-- Lv.3 ステップ一覧（ロック） -->
+    <div class="step-list" id="step-list-3" style="display:none">
+      <div class="step-item locked"><div class="step-num">1</div><div class="step-title-sidebar">Worktreeで並行作業管理</div></div>
+      <div class="step-item locked"><div class="step-num">2</div><div class="step-title-sidebar">GitHub Pagesデプロイ</div></div>
+      <div class="step-item locked"><div class="step-num">3</div><div class="step-title-sidebar">GitHub Actions入門</div></div>
+      <div class="step-item locked"><div class="step-num">4</div><div class="step-title-sidebar">複数Worktreeのマージ</div></div>
+      <div class="step-item locked"><div class="step-num">5</div><div class="step-title-sidebar">GITHUB_TOKENの管理</div></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div>Lv.2・Lv.3は<a href="https://note.com" target="_blank" style="color:var(--accent)">note</a>で購入後に解放</div>
+    </div>
+  </nav>
+
+  <!-- メインコンテンツ -->
+  <main class="main">
+
+    <!-- ===== Lv.1 Step 1: リポジトリとは何か ===== -->
+    <div class="step-content active" id="step-1-1">
+      <div class="step-header">
+        <span class="level-badge lv1"><i class="fa fa-seedling"></i> Lv.1 — Claude Code基本動作に必須</span>
+        <div class="step-number-label">STEP 1 / 5</div>
+        <div class="step-title">リポジトリとは何か</div>
+        <div class="step-subtitle">Claude Codeが認識する「プロジェクトの箱」の概念</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">解説</div>
+        <div class="desc-text">
+          <p>Gitリポジトリとは、プロジェクトのすべての変更履歴を記録する「箱」のようなものです。普通のフォルダと違うのは、<strong>いつ・誰が・何を変えたか</strong>をすべて記憶している点です。</p>
+          <p>たとえば「昨日の状態に戻したい」「この変更は誰がいつ追加したのか」という疑問に答えられるのが、リポジトリの仕組みです。</p>
+          <p>フォルダの中に <code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">.git</code> という隠しフォルダが作られると、そのフォルダはリポジトリになります。これがGitの「記憶装置」です。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="claude-box">
+          <div class="claude-box-header">
+            <i class="fa fa-robot"></i> Claude Codeでの意味
+          </div>
+          <p>Claude Codeを起動すると、まず現在のフォルダのリポジトリ構造を読み取ります。どんなファイルがあり、どんな変更履歴があるかを把握した上で、AIが作業を開始します。<br><br>リポジトリがない状態でClaude Codeを使うと、<strong>Worktree（並行作業）機能が使えません</strong>。後で詳しく学びますが、Worktreeが使えると作業効率が格段に上がります。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-terminal" style="color:var(--purple);margin-right:6px"></i> Claude Codeに貼れるプロンプト</div>
+        <div class="prompt-box">
+          <div class="prompt-box-header">
+            <span><i class="fa fa-comment-dots"></i> クリックしてコピー</span>
+            <button class="btn-copy" onclick="copyPrompt(this, 'prompt-1-1')">
+              <i class="fa fa-copy"></i> コピー
+            </button>
+          </div>
+          <div class="prompt-text" id="prompt-1-1">このフォルダのファイル構成を確認して、どんなプロジェクトか教えてください。
+Gitリポジトリとして初期化されているかどうかも確認してください。</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-circle-question" style="color:var(--warning);margin-right:6px"></i> 理解チェック</div>
+        <div class="quiz-box">
+          <div class="quiz-question">Gitリポジトリを作ると、フォルダの中に何が作られる？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 1)"><span class="quiz-num">1</span> .claude フォルダ</button>
+            <button class="quiz-option" onclick="checkAnswer(this, true, 1, 1)"><span class="quiz-num">2</span> .git フォルダ（Gitの記憶装置）</button>
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 1)"><span class="quiz-num">3</span> README.md ファイル</button>
+          </div>
+          <div class="quiz-result" id="quiz-result-1-1"></div>
+        </div>
+      </div>
+
+      <div class="complete-section">
+        <button class="btn-complete" id="complete-1-1" onclick="completeStep(1,1)" disabled>
+          <i class="fa fa-check"></i> このステップを完了する
+        </button>
+        <div class="nav-btns">
+          <button class="btn-nav primary" onclick="showStep(1,2)">次のステップへ <i class="fa fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Lv.1 Step 2: git init ===== -->
+    <div class="step-content" id="step-1-2">
+      <div class="step-header">
+        <span class="level-badge lv1"><i class="fa fa-seedling"></i> Lv.1 — Claude Code基本動作に必須</span>
+        <div class="step-number-label">STEP 2 / 5</div>
+        <div class="step-title">git init</div>
+        <div class="step-subtitle">Claude Codeが動く場所を作る</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">解説</div>
+        <div class="desc-text">
+          <p><code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">git init</code> はフォルダをGitリポジトリに変えるコマンドです。たった一行、実行するだけで完了します。</p>
+          <p>このコマンドを実行すると、フォルダの中に <code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">.git</code> という隠しフォルダが作られます。これ以降、そのフォルダでの変更がすべて記録されるようになります。</p>
+          <p>Claude Codeは「プロジェクトを始めてください」という指示を受けたとき、自動で <code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">git init</code> を実行してくれることもありますが、自分で実行できると何が起きているかが分かります。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">コマンド</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="lang">Terminal</span>
+          </div>
+          <pre><span class="comment"># まず、作業したいフォルダに移動する</span>
+<span class="cmd">cd</span> ~/Desktop/my-project
+
+<span class="comment"># Gitリポジトリとして初期化する</span>
+<span class="cmd">git init</span>
+
+<span class="comment"># 結果: "Initialized empty Git repository" と表示されれば成功</span></pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="claude-box">
+          <div class="claude-box-header">
+            <i class="fa fa-robot"></i> Claude Codeでの意味
+          </div>
+          <p><strong>Worktree（並行作業）機能は、gitリポジトリが必須です。</strong><br><br>
+          Worktreeとは、同じプロジェクトの異なるブランチを、別のフォルダで同時に作業できる機能です。Claude Codeはこれを使って「AIに複数の作業を同時にやらせる」ことができます。<br><br>
+          <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">git init</code> がすべての始まりです。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-terminal" style="color:var(--purple);margin-right:6px"></i> Claude Codeに貼れるプロンプト</div>
+        <div class="prompt-box">
+          <div class="prompt-box-header">
+            <span><i class="fa fa-comment-dots"></i> クリックしてコピー</span>
+            <button class="btn-copy" onclick="copyPrompt(this, 'prompt-1-2')">
+              <i class="fa fa-copy"></i> コピー
+            </button>
+          </div>
+          <div class="prompt-text" id="prompt-1-2">このフォルダをGitリポジトリとして初期化してください。
+git initを実行して、初期化が成功したか確認してください。</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-circle-question" style="color:var(--warning);margin-right:6px"></i> 理解チェック</div>
+        <div class="quiz-box">
+          <div class="quiz-question">git initをしないと、Claude Codeで使えなくなる機能は？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 2)"><span class="quiz-num">1</span> チャット機能</button>
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 2)"><span class="quiz-num">2</span> ファイル作成機能</button>
+            <button class="quiz-option" onclick="checkAnswer(this, true, 1, 2)"><span class="quiz-num">3</span> Worktree（並行作業）機能</button>
+          </div>
+          <div class="quiz-result" id="quiz-result-1-2"></div>
+        </div>
+      </div>
+
+      <div class="complete-section">
+        <button class="btn-complete" id="complete-1-2" onclick="completeStep(1,2)" disabled>
+          <i class="fa fa-check"></i> このステップを完了する
+        </button>
+        <div class="nav-btns">
+          <button class="btn-nav" onclick="showStep(1,1)"><i class="fa fa-arrow-left"></i> 前へ</button>
+          <button class="btn-nav primary" onclick="showStep(1,3)">次のステップへ <i class="fa fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Lv.1 Step 3: git add / git commit ===== -->
+    <div class="step-content" id="step-1-3">
+      <div class="step-header">
+        <span class="level-badge lv1"><i class="fa fa-seedling"></i> Lv.1 — Claude Code基本動作に必須</span>
+        <div class="step-number-label">STEP 3 / 5</div>
+        <div class="step-title">git add / git commit</div>
+        <div class="step-subtitle">作業をスナップショット保存して「元に戻せる状態」を作る</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">解説</div>
+        <div class="desc-text">
+          <p>Gitでの保存は2段階です。<strong>git add</strong>（ステージング）と <strong>git commit</strong>（確定保存）です。</p>
+          <p>写真撮影に例えると、<code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">git add</code> は「カメラに構える」、<code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">git commit</code> は「シャッターを押す」イメージです。commitするたびに、その瞬間のプロジェクト全体のスナップショットが保存されます。</p>
+          <p>コミットが積み重なることで、「3つ前の状態に戻したい」という操作が可能になります。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">コマンド</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="lang">Terminal</span>
+          </div>
+          <pre><span class="comment"># 変更したすべてのファイルをステージングする</span>
+<span class="cmd">git add</span> .
+
+<span class="comment"># または特定のファイルだけ</span>
+<span class="cmd">git add</span> index.html
+
+<span class="comment"># 変更を確定保存（メッセージは日本語でもOK）</span>
+<span class="cmd">git commit</span> -m <span class="str">"初回コミット: プロジェクト作成"</span>
+
+<span class="comment"># 確認: コミット履歴を見る</span>
+<span class="cmd">git log</span> --oneline</pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="claude-box">
+          <div class="claude-box-header">
+            <i class="fa fa-robot"></i> Claude Codeでの意味
+          </div>
+          <p><strong>AIに大きな変更を頼む前に、必ずコミットしましょう。</strong><br><br>
+          Claude Codeに「このファイルを全部書き直して」と頼んで失敗しても、事前にコミットがあれば <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">git checkout .</code> で元に戻せます。<br><br>
+          Claude Code自身も、作業の節目に自動でコミットしてくれることがあります。コミットメッセージを日本語で書くよう指示することもできます。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-terminal" style="color:var(--purple);margin-right:6px"></i> Claude Codeに貼れるプロンプト</div>
+        <div class="prompt-box">
+          <div class="prompt-box-header">
+            <span><i class="fa fa-comment-dots"></i> クリックしてコピー</span>
+            <button class="btn-copy" onclick="copyPrompt(this, 'prompt-1-3')">
+              <i class="fa fa-copy"></i> コピー
+            </button>
+          </div>
+          <div class="prompt-text" id="prompt-1-3">現在の変更内容を確認して、適切なコミットメッセージをつけてコミットしてください。
+コミットメッセージは日本語で、変更内容が一目でわかるものにしてください。</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-circle-question" style="color:var(--warning);margin-right:6px"></i> 理解チェック</div>
+        <div class="quiz-box">
+          <div class="quiz-question">Claude Codeに大きな変更を頼む前にコミットしておく理由は？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 3)"><span class="quiz-num">1</span> コミットしないとClaude Codeが起動しないから</button>
+            <button class="quiz-option" onclick="checkAnswer(this, true, 1, 3)"><span class="quiz-num">2</span> 変更に失敗したとき、コミット時点の状態に戻せるから</button>
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 3)"><span class="quiz-num">3</span> GitHubに自動でアップロードされるから</button>
+          </div>
+          <div class="quiz-result" id="quiz-result-1-3"></div>
+        </div>
+      </div>
+
+      <div class="complete-section">
+        <button class="btn-complete" id="complete-1-3" onclick="completeStep(1,3)" disabled>
+          <i class="fa fa-check"></i> このステップを完了する
+        </button>
+        <div class="nav-btns">
+          <button class="btn-nav" onclick="showStep(1,2)"><i class="fa fa-arrow-left"></i> 前へ</button>
+          <button class="btn-nav primary" onclick="showStep(1,4)">次のステップへ <i class="fa fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Lv.1 Step 4: .gitignore ===== -->
+    <div class="step-content" id="step-1-4">
+      <div class="step-header">
+        <span class="level-badge lv1"><i class="fa fa-seedling"></i> Lv.1 — Claude Code基本動作に必須</span>
+        <div class="step-number-label">STEP 4 / 5</div>
+        <div class="step-title">.gitignore</div>
+        <div class="step-subtitle">Claude Codeに見せてはいけないファイルを隠す（APIキー等）</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">解説</div>
+        <div class="desc-text">
+          <p><code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">.gitignore</code> ファイルに書いたファイル名やパターンは、Gitの管理対象外になります。「なかったこと」として扱われます。</p>
+          <p>特に重要なのは<strong>セキュリティ</strong>です。APIキーやパスワードが書かれた <code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">.env</code> ファイルを誤ってGitHubに公開してしまう事故が後を絶ちません。<code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">.gitignore</code> はその予防策です。</p>
+          <p>Claude Codeを使う場合は、Claude Codeが生成した設定ファイルに機密情報が入っていないかを必ず確認し、<code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">.gitignore</code> で保護しましょう。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">設定例（.gitignoreの中身）</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="lang">.gitignore</span>
+          </div>
+          <pre><span class="comment"># APIキー・環境変数ファイル（絶対に公開しない）</span>
+<span class="key">.env</span>
+<span class="key">.env.local</span>
+
+<span class="comment"># ログファイル（容量が大きく不要）</span>
+<span class="key">*.log</span>
+
+<span class="comment"># パッケージフォルダ（サイズが巨大）</span>
+<span class="key">node_modules/</span>
+
+<span class="comment"># macOSが自動生成するファイル（不要）</span>
+<span class="key">.DS_Store</span>
+
+<span class="comment"># IDEの設定（チームで共有不要なもの）</span>
+<span class="key">.vscode/settings.json</span></pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="claude-box">
+          <div class="claude-box-header">
+            <i class="fa fa-shield-halved"></i> セキュリティ注意
+          </div>
+          <p>Claude Codeでコードを書く際、<strong>GitHubにpushする前に必ずセキュリティチェックを行いましょう。</strong><br><br>
+          確認項目: <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">.env</code> やAPIキー・トークン類が含まれていないか / <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">CLAUDE.md</code> や設定ファイルに機密情報が混入していないか / <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">.gitignore</code> に機密ファイルが適切に登録されているか。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-terminal" style="color:var(--purple);margin-right:6px"></i> Claude Codeに貼れるプロンプト</div>
+        <div class="prompt-box">
+          <div class="prompt-box-header">
+            <span><i class="fa fa-comment-dots"></i> クリックしてコピー</span>
+            <button class="btn-copy" onclick="copyPrompt(this, 'prompt-1-4')">
+              <i class="fa fa-copy"></i> コピー
+            </button>
+          </div>
+          <div class="prompt-text" id="prompt-1-4">このプロジェクト用の.gitignoreファイルを作成してください。
+以下を必ず除外してください：
+- .env などのAPIキー・機密情報ファイル
+- node_modules/ などの依存パッケージ
+- *.log などのログファイル
+- .DS_Store などのシステムファイル</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-circle-question" style="color:var(--warning);margin-right:6px"></i> 理解チェック</div>
+        <div class="quiz-box">
+          <div class="quiz-question">.gitignoreに .env と書くと、どうなる？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 4)"><span class="quiz-num">1</span> .envファイルが自動で暗号化される</button>
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 4)"><span class="quiz-num">2</span> .envファイルが削除される</button>
+            <button class="quiz-option" onclick="checkAnswer(this, true, 1, 4)"><span class="quiz-num">3</span> .envファイルがGitの管理対象外になり、GitHubに公開されなくなる</button>
+          </div>
+          <div class="quiz-result" id="quiz-result-1-4"></div>
+        </div>
+      </div>
+
+      <div class="complete-section">
+        <button class="btn-complete" id="complete-1-4" onclick="completeStep(1,4)" disabled>
+          <i class="fa fa-check"></i> このステップを完了する
+        </button>
+        <div class="nav-btns">
+          <button class="btn-nav" onclick="showStep(1,3)"><i class="fa fa-arrow-left"></i> 前へ</button>
+          <button class="btn-nav primary" onclick="showStep(1,5)">次のステップへ <i class="fa fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Lv.1 Step 5: git status / git log ===== -->
+    <div class="step-content" id="step-1-5">
+      <div class="step-header">
+        <span class="level-badge lv1"><i class="fa fa-seedling"></i> Lv.1 — Claude Code基本動作に必須</span>
+        <div class="step-number-label">STEP 5 / 5</div>
+        <div class="step-title">git status / git log</div>
+        <div class="step-subtitle">現在の状態と変更履歴を確認する</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">解説</div>
+        <div class="desc-text">
+          <p><code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">git status</code> は「今どんな変更が起きているか」を確認するコマンドです。どのファイルが変更されたか、ステージングされているか、コミット待ちか、が一目でわかります。</p>
+          <p><code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">git log</code> は過去のコミット履歴を表示します。「いつ・何を変えたか」の記録が見られます。<code style="color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:3px;">--oneline</code> オプションを付けると、一行ずつコンパクトに表示されます。</p>
+          <p>この2つのコマンドを使いこなすと、Claude Codeが何をしたか、何が変わったかを正確に把握できます。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">コマンド</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="lang">Terminal</span>
+          </div>
+          <pre><span class="comment"># 現在の変更状態を確認（よく使う！）</span>
+<span class="cmd">git status</span>
+
+<span class="comment"># コミット履歴を一行で見る（わかりやすい）</span>
+<span class="cmd">git log</span> --oneline
+
+<span class="comment"># 直近3件だけ表示する</span>
+<span class="cmd">git log</span> --oneline -3
+
+<span class="comment"># 特定のコミットの変更内容を見る（IDを指定）</span>
+<span class="cmd">git show</span> abc1234</pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="claude-box">
+          <div class="claude-box-header">
+            <i class="fa fa-robot"></i> Claude Codeでの意味
+          </div>
+          <p><strong>AIが変更した内容を「確認→コミット」のサイクルで管理するのが安全なClaude Code活用の基本です。</strong><br><br>
+          Claude Codeに指示を出す → <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">git status</code> で変更を確認 → 問題なければ <code style="color:var(--accent);background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">git commit</code> でスナップショット保存、というサイクルを習慣にすると、AIの作業ミスに気づきやすくなり、いつでも巻き戻しができる状態を保てます。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-terminal" style="color:var(--purple);margin-right:6px"></i> Claude Codeに貼れるプロンプト</div>
+        <div class="prompt-box">
+          <div class="prompt-box-header">
+            <span><i class="fa fa-comment-dots"></i> クリックしてコピー</span>
+            <button class="btn-copy" onclick="copyPrompt(this, 'prompt-1-5')">
+              <i class="fa fa-copy"></i> コピー
+            </button>
+          </div>
+          <div class="prompt-text" id="prompt-1-5">git statusとgit log --onelineの結果を確認して、直近の変更内容を日本語で簡潔に説明してください。
+何が変更されていて、何がまだコミットされていないかを教えてください。</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label"><i class="fa fa-circle-question" style="color:var(--warning);margin-right:6px"></i> 理解チェック</div>
+        <div class="quiz-box">
+          <div class="quiz-question">Claude Codeが変更を加えた後、まず実行すべきコマンドは？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 5)"><span class="quiz-num">1</span> git push（GitHubに送る）</button>
+            <button class="quiz-option" onclick="checkAnswer(this, true, 1, 5)"><span class="quiz-num">2</span> git status（変更内容を確認する）</button>
+            <button class="quiz-option" onclick="checkAnswer(this, false, 1, 5)"><span class="quiz-num">3</span> git init（再初期化する）</button>
+          </div>
+          <div class="quiz-result" id="quiz-result-1-5"></div>
+        </div>
+      </div>
+
+      <div class="complete-section">
+        <button class="btn-complete" id="complete-1-5" onclick="completeStep(1,5)" disabled>
+          <i class="fa fa-check"></i> このステップを完了する
+        </button>
+        <div class="nav-btns">
+          <button class="btn-nav" onclick="showStep(1,4)"><i class="fa fa-arrow-left"></i> 前へ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Lv.1 完了画面 ===== -->
+    <div class="step-content" id="step-lv1-complete">
+      <div style="text-align:center;padding:40px 20px">
+        <div style="font-size:64px;margin-bottom:16px">🎉</div>
+        <h2 style="font-size:28px;font-weight:700;margin-bottom:12px;color:var(--success)">Lv.1 完了！</h2>
+        <p style="color:var(--text-muted);margin-bottom:32px;line-height:1.7;font-size:15px">
+          おめでとうございます！Claude Codeを使う上で必須のGit基礎知識をマスターしました。<br>
+          リポジトリ・init・add/commit・.gitignore・status/log — この5つが土台です。
+        </p>
+        <div class="congrats-box" style="text-align:left;margin-bottom:32px">
+          <h3 style="margin-bottom:12px">✅ 習得したスキル</h3>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px">
+            <li><i class="fa fa-check" style="color:var(--success);margin-right:8px"></i>Gitリポジトリの概念と.gitフォルダの役割</li>
+            <li><i class="fa fa-check" style="color:var(--success);margin-right:8px"></i>git initでClaude Codeの作業場所を作る方法</li>
+            <li><i class="fa fa-check" style="color:var(--success);margin-right:8px"></i>git add/commitでAIの作業を安全に管理する方法</li>
+            <li><i class="fa fa-check" style="color:var(--success);margin-right:8px"></i>.gitignoreでAPIキーをGitHubから守る方法</li>
+            <li><i class="fa fa-check" style="color:var(--success);margin-right:8px"></i>git status/logでAIの変更内容を把握する方法</li>
+          </ul>
+        </div>
+        <div style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:10px;padding:20px;margin-bottom:28px">
+          <p style="font-size:14px;line-height:1.7;color:var(--text)">
+            <strong style="color:var(--accent)">🔒 Lv.2・Lv.3 の内容</strong><br><br>
+            <strong>Lv.2:</strong> ブランチ / GitHubリポジトリ作成 / push・pull / PR / Worktreeの前提知識<br>
+            <strong>Lv.3:</strong> Worktreeで並行作業 / GitHub Pagesデプロイ / GitHub Actions / Worktreeマージ戦略
+          </p>
+        </div>
+        <a href="https://note.com" target="_blank" class="btn-note">
+          <i class="fa fa-lock-open"></i> noteでLv.2・Lv.3を解放する（980円）
+        </a>
+      </div>
+    </div>
+
+    <!-- ===== Lv.2 ロック画面 ===== -->
+    <div class="step-content" id="step-2-locked">
+      <div class="locked-content">
+        <div class="locked-icon"><i class="fa fa-lock"></i></div>
+        <h3>Lv.2 は購入後に解放されます</h3>
+        <p>ブランチ・GitHub連携・PR・Worktreeなど、<br>Claude Codeを中級活用するための5ステップ。<br>noteで購入後すぐにアクセスできます。</p>
+        <a href="https://note.com" target="_blank" class="btn-note">
+          <i class="fa fa-lock-open"></i> noteで購入する（980円）
+        </a>
+      </div>
+    </div>
+
+    <!-- ===== Lv.3 ロック画面 ===== -->
+    <div class="step-content" id="step-3-locked">
+      <div class="locked-content">
+        <div class="locked-icon"><i class="fa fa-lock"></i></div>
+        <h3>Lv.3 は購入後に解放されます</h3>
+        <p>Worktreeで並行作業・GitHub Actions・GITHUB_TOKEN管理など、<br>Claude Code高度活用のための5ステップ。<br>noteで購入後すぐにアクセスできます。</p>
+        <a href="https://note.com" target="_blank" class="btn-note">
+          <i class="fa fa-lock-open"></i> noteで購入する（980円）
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ===== 進捗データ =====
+  const STORAGE_KEY = 'cggl_progress';
+  const TOTAL_STEPS = 5; // Lv.1のみ（Lv.2・3は有料）
+
+  function loadProgress() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed: [], quizDone: {} };
+    } catch { return { completed: [], quizDone: {} }; }
+  }
+
+  function saveProgress(p) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  }
+
+  function isCompleted(level, step) {
+    const p = loadProgress();
+    return p.completed.some(c => c.l === level && c.s === step);
+  }
+
+  function isQuizDone(level, step) {
+    const p = loadProgress();
+    return !!p.quizDone[`${level}-${step}`];
+  }
+
+  // ===== 進捗バー更新 =====
+  function updateProgressBar() {
+    const p = loadProgress();
+    const done = p.completed.filter(c => c.l === 1).length;
+    const pct = Math.round((done / TOTAL_STEPS) * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+  }
+
+  // ===== サイドバーのチェックマーク更新 =====
+  function updateSidebar() {
+    for (let s = 1; s <= 5; s++) {
+      const navItem = document.getElementById(`nav-1-${s}`);
+      const checkEl = document.getElementById(`check-1-${s}`);
+      if (isCompleted(1, s)) {
+        navItem.classList.add('completed');
+        checkEl.innerHTML = '<i class="fa fa-check"></i>';
+      }
+    }
+  }
+
+  // ===== ステップ表示 =====
+  let currentLevel = 1;
+  let currentStep = 1;
+
+  function showStep(level, step) {
+    // 全コンテンツ非表示
+    document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
+
+    // 対象を表示
+    const content = document.getElementById(`step-${level}-${step}`);
+    if (content) {
+      content.classList.add('active');
+      const navItem = document.getElementById(`nav-${level}-${step}`);
+      if (navItem) navItem.classList.add('active');
+    }
+
+    currentLevel = level;
+    currentStep = step;
+
+    // クイズが完了済みなら完了ボタンを有効化
+    const completeBtn = document.getElementById(`complete-${level}-${step}`);
+    if (completeBtn) {
+      if (isQuizDone(level, step)) {
+        completeBtn.disabled = false;
+      }
+      if (isCompleted(level, step)) {
+        completeBtn.textContent = '';
+        completeBtn.innerHTML = '<i class="fa fa-check-circle"></i> 完了済み';
+        completeBtn.classList.add('done');
+        completeBtn.disabled = false;
+      }
+    }
+
+    // モバイルでサイドバーを閉じる
+    closeSidebar();
+  }
+
+  // ===== レベルタブ切替 =====
+  function switchLevel(level, btn) {
+    if (btn.classList.contains('locked')) return;
+
+    document.querySelectorAll('.level-tab button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('[id^="step-list-"]').forEach(el => el.style.display = 'none');
+    document.getElementById(`step-list-${level}`).style.display = 'block';
+
+    if (level === 2) showLockedContent(2);
+    else if (level === 3) showLockedContent(3);
+    else showStep(1, 1);
+  }
+
+  function showLockedContent(level) {
+    document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+    document.getElementById(`step-${level}-locked`).classList.add('active');
+  }
+
+  // ===== クイズ =====
+  function checkAnswer(btn, isCorrect, level, step) {
+    const allOptions = btn.closest('.quiz-options').querySelectorAll('.quiz-option');
+    allOptions.forEach(o => o.disabled = true);
+
+    const resultEl = document.getElementById(`quiz-result-${level}-${step}`);
+
+    if (isCorrect) {
+      btn.classList.add('correct');
+      resultEl.className = 'quiz-result correct-result show';
+      resultEl.innerHTML = '<i class="fa fa-circle-check"></i> 正解！理解が深まりましたね。';
+
+      // クイズ完了を記録 → 完了ボタン有効化
+      const p = loadProgress();
+      p.quizDone[`${level}-${step}`] = true;
+      saveProgress(p);
+
+      const completeBtn = document.getElementById(`complete-${level}-${step}`);
+      if (completeBtn && !isCompleted(level, step)) {
+        completeBtn.disabled = false;
+      }
+    } else {
+      btn.classList.add('wrong');
+      resultEl.className = 'quiz-result wrong-result show';
+      resultEl.innerHTML = '<i class="fa fa-circle-xmark"></i> 惜しい！正しい答えをもう一度考えてみてください。';
+      allOptions.forEach(o => o.disabled = false);
+      btn.disabled = true;
+    }
+  }
+
+  // ===== ステップ完了 =====
+  function completeStep(level, step) {
+    if (!isCompleted(level, step)) {
+      const p = loadProgress();
+      p.completed.push({ l: level, s: step });
+      saveProgress(p);
+    }
+
+    const btn = document.getElementById(`complete-${level}-${step}`);
+    btn.innerHTML = '<i class="fa fa-check-circle"></i> 完了済み';
+    btn.classList.add('done');
+
+    updateSidebar();
+    updateProgressBar();
+
+    // Lv.1全完了チェック
+    const lv1Done = [1,2,3,4,5].every(s => isCompleted(1, s));
+    if (lv1Done) {
+      setTimeout(() => {
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('step-lv1-complete').classList.add('active');
+      }, 800);
+    } else {
+      // 次のステップへ自動移動
+      if (step < 5) {
+        setTimeout(() => showStep(level, step + 1), 600);
+      }
+    }
+  }
+
+  // ===== プロンプトコピー =====
+  function copyPrompt(btn, id) {
+    const text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = '<i class="fa fa-check"></i> コピーしました';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fa fa-copy"></i> コピー';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // ===== リセット =====
+  function resetProgress() {
+    if (confirm('学習進捗をリセットしますか？')) {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  }
+
+  // ===== モバイルメニュー =====
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  // ===== 初期化 =====
+  function init() {
+    updateProgressBar();
+    updateSidebar();
+
+    // 最後に表示していたステップを復元
+    const p = loadProgress();
+    const lastLevel = p.lastLevel || 1;
+    const lastStep = p.lastStep || 1;
+    showStep(lastLevel, lastStep);
+
+    // PWA Service Worker 登録
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    }
+  }
+
+  // ステップ移動時に最後のステップを保存
+  const origShowStep = showStep;
+  window.showStep = function(level, step) {
+    origShowStep(level, step);
+    const p = loadProgress();
+    p.lastLevel = level;
+    p.lastStep = step;
+    saveProgress(p);
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
