@@ -1,0 +1,17 @@
+# 機密情報・環境変数
+.env
+.env.local
+.env.*.local
+
+# macOSシステムファイル
+.DS_Store
+
+# ログ
+*.log
+
+# エディタ設定
+.vscode/settings.json
+.idea/
+
+# 一時ファイル
+*.tmp
