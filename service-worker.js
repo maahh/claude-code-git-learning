@@ -1,5 +1,5 @@
 // Service Worker — Claude Code × Git/GitHub 実践ラーニング
-const CACHE_NAME = 'cggl-v1';
+const CACHE_NAME = 'cggl-v2';
 const ASSETS = [
   '/',
   '/index.html',
