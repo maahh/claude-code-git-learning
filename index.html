@@ -589,10 +589,8 @@
               <span><i class="fa fa-comment-dots"></i> コピーしてClaude Codeに貼り付ける</span>
               <button class="btn-sm" onclick="copyText(this, 'pr-1')">コピー</button>
             </div>
-            <div class="prompt-text" id="pr-1">このフォルダのGitリポジトリ構造を確認して、以下を教えてください：
-1. どんなファイルがあるか
-2. 最近のコミット履歴
-3. 現在のブランチ名</div>
+            <div class="prompt-text" id="pr-1">Gitのリポジトリとは何か教えてください。
+特に「.gitフォルダが何をしているか」と「Claude Codeを使うときになぜリポジトリが必要なのか」を重点的に解説してください。</div>
           </div>
         </div>
 
@@ -684,8 +682,10 @@
               <span><i class="fa fa-comment-dots"></i> コピーしてClaude Codeに貼り付ける</span>
               <button class="btn-sm" onclick="copyText(this, 'pr-2')">コピー</button>
             </div>
-            <div class="prompt-text" id="pr-2">このリポジトリをGitHubからクローンして、ローカルで作業できる状態にしてください。
-クローン後、git statusでリポジトリの状態を確認してください。</div>
+            <div class="prompt-text" id="pr-2">このフォルダのGitリポジトリ構造を確認して、以下を教えてください：
+1. どんなファイルがあるか
+2. 最近のコミット履歴
+3. 現在のブランチ名</div>
           </div>
         </div>
 
@@ -1137,7 +1137,7 @@ pushが完了したら、コミットのSHAも教えてください。</div>
         repo = await api('/user/repos', 'POST', {
           name: REPO_NAME,
           description: 'Claude Code × Git/GitHub 実践ラーニング - 練習用リポジトリ',
-          private: false,
+          private: true,
           auto_init: true
         });
         showStatus('repo-status', 'success',
